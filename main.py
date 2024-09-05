@@ -67,9 +67,18 @@ def addContacts(contact_str: str):
     Args:
         contact_str (str): Contact Name and Number Separated by coma (eg DemianPog,123456)
     """
-    name, number = contact_str.split(",")
-    contacts[number] = name
-    print("----- Contact Added Successfully -----")
+    try:
+        name, number = contact_str.split(",")
+
+        # Check for duplicates
+        if number in contacts:
+            print("----- Contact with this number already exists! -----")
+        else:
+            contacts[number] = name
+            print("----- Contact Added Successfully -----")
+
+    except ValueError:
+        print("----- Invalid input format. Please use 'Name,Number' -----")
     
 def searchContacts(number: str):
     record = contacts.get(number, None)
