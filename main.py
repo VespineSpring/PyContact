@@ -19,10 +19,10 @@ def is_initialized() -> bool:
 
     if not data:
         return False
-    
-    if not data["initialized"]:
+
+    if not data.get("initialized", False):
         return False
-    
+
     return True
 
 
@@ -32,7 +32,7 @@ def setup_database(username: str, password: str):
     settings_data = {
         "initialized": True,
         "current_account": None,
-        "accounts": [username]
+        "accounts": [username],
     }
 
     with open(SETTINGS_FILE, "w") as file:
@@ -44,11 +44,7 @@ def setup_database(username: str, password: str):
         with open(ACCOUNTS_FILE, "w") as file:
             json.dump([], file, indent=4)
 
-    account_data_query = {
-        "id": account_id,
-        "username": username,
-        "password": password
-    }
+    account_data_query = {"id": account_id, "username": username, "password": password}
 
     with open(ACCOUNTS_FILE, "r") as file:
         account_data = json.load(file)
@@ -59,14 +55,15 @@ def setup_database(username: str, password: str):
         json.dump(account_data, file, indent=4)
 
 
-@app.command(name="init")
-def initialize():
-    is_app_initialized = is_initialized()
+is_app_initialized = is_initialized()
 
+
+@app.command(name="init")
+def initialize() -> None:
     if is_app_initialized:
         print("[red]App has been already initialized![/red]")
         return
-    
+
     while True:
         username: str = input("Username: ")
 
@@ -81,6 +78,50 @@ def initialize():
     setup_database(username=username, password=password)
 
     print("[green]App has been initialized.[/green]")
+
+
+@app.command()
+def add_user() -> None:
+    if not is_app_initialized:
+        print("[red]App has not been initialized yet.\nRun 'init' command to initialize it.[/red]")
+        return
+
+    while True:
+        username: str = input("Username: ")
+
+        if len(username) <= 3:
+            print("[red]Your username should be of 4 letters.[/red]")
+            continue
+
+        password: str = input("Password: ")
+
+        break
+
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    accounts_list = settings_data.get("accounts", [])
+
+    accounts_list.append(username)
+
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(settings_data, file, indent=4)
+
+    account_id = str(uuid.uuid4())
+
+    account_data_query = {"id": account_id, "username": username, "password": password}
+
+    with open(ACCOUNTS_FILE, "r") as file:
+        account_data = json.load(file)
+
+    account_data.append(account_data_query)
+
+    with open(ACCOUNTS_FILE, "w") as file:
+        json.dump(account_data, file, indent=4)
+
+    os.makedirs(f"database/accounts/{username.lower()}", exist_ok=True)
+
+    print("[green]User has been added![/green]")
 
 
 if __name__ == "__main__":
