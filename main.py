@@ -11,8 +11,11 @@ ACCOUNTS_FILE = "database/accounts.json"
 
 
 def is_initialized() -> bool:
-    with open(SETTINGS_FILE, "r") as file:
-        data = json.load(file)
+    try:
+        with open(SETTINGS_FILE, "r") as file:
+            data = json.load(file)
+    except:
+        return False
 
     if not data:
         return False
@@ -23,31 +26,9 @@ def is_initialized() -> bool:
     return True
 
 
-@app.command(name="init")
-def initialize():
-    is_app_initialized = is_initialized()
+def setup_database(username: str, password: str):
+    os.makedirs(f"database/accounts/{username.lower()}", exist_ok=True)
 
-    if is_app_initialized:
-        print("[red]App has been already initialized![/red]")
-        return
-    
-    while True:
-        username: str = input("Username: ")
-
-        if len(username) <= 3:
-            print("[red]Your username should be of 4 letters.[/red]")
-            continue
-
-        password: str = input("Password: ")
-
-        break
-
-    create_files(username=username, password=password)
-
-    print("[green]App has been initialized.[/green]")
-
-
-def create_files(username: str, password: str):
     settings_data = {
         "initialized": True,
         "current_account": None,
@@ -76,6 +57,30 @@ def create_files(username: str, password: str):
 
     with open(ACCOUNTS_FILE, "w") as file:
         json.dump(account_data, file, indent=4)
+
+
+@app.command(name="init")
+def initialize():
+    is_app_initialized = is_initialized()
+
+    if is_app_initialized:
+        print("[red]App has been already initialized![/red]")
+        return
+    
+    while True:
+        username: str = input("Username: ")
+
+        if len(username) <= 3:
+            print("[red]Your username should be of 4 letters.[/red]")
+            continue
+
+        password: str = input("Password: ")
+
+        break
+
+    setup_database(username=username, password=password)
+
+    print("[green]App has been initialized.[/green]")
 
 
 if __name__ == "__main__":
