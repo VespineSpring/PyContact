@@ -10,8 +10,27 @@ SETTINGS_FILE = "database/settings.json"
 ACCOUNTS_FILE = "database/accounts.json"
 
 
+def is_initialized() -> bool:
+    with open(SETTINGS_FILE, "r") as file:
+        data = json.load(file)
+
+    if not data:
+        return False
+    
+    if not data["initialized"]:
+        return False
+    
+    return True
+
+
 @app.command(name="init")
 def initialize():
+    is_app_initialized = is_initialized()
+
+    if is_app_initialized:
+        print("[red]App has been already initialized![/red]")
+        return
+    
     while True:
         username: str = input("Username: ")
 
