@@ -54,16 +54,16 @@ def setup_database(username: str, password: str) -> None:
     with open(ACCOUNTS_FILE, "w") as file:
         json.dump(account_data, file, indent=4)
 
-    USER_FILE = f"database/accounts/{username.lower()}/settings.json"
-    CONTACTS_FILE = f"database/accounts/{username.lower()}/contacts.json"
+    user_file = f"database/accounts/{username.lower()}/settings.json"
+    contacts_file = f"database/accounts/{username.lower()}/contacts.json"
 
     user_data_entry = {"id": account_id, "username": username, "password": password}
 
-    with open(USER_FILE, "w") as file:
+    with open(user_file, "w") as file:
         json.dump(user_data_entry, file, indent=4)
 
-    if not os.path.exists(CONTACTS_FILE) or os.path.getsize(CONTACTS_FILE) == 0:
-        with open(CONTACTS_FILE, "w") as file:
+    if not os.path.exists(contacts_file) or os.path.getsize(contacts_file) == 0:
+        with open(contacts_file, "w") as file:
             json.dump([], file, indent=4)
 
 
@@ -91,7 +91,9 @@ def initialize() -> None:
 
 def command_initialization_check() -> None:
     if not initialization_check():
-        print("[red]App has not been initialized yet.\nRun 'init' command to initialize it.[/red]")
+        print(
+            "[red]App has not been initialized yet.\nRun 'init' command to initialize it.[/red]"
+        )
         return
 
 
@@ -134,16 +136,16 @@ def add_user() -> None:
 
     os.makedirs(f"database/accounts/{username.lower()}", exist_ok=True)
 
-    USER_FILE = f"database/accounts/{username.lower()}/settings.json"
-    CONTACTS_FILE = f"database/accounts/{username.lower()}/contacts.json"
+    user_file = f"database/accounts/{username.lower()}/settings.json"
+    contacts_file = f"database/accounts/{username.lower()}/contacts.json"
 
     user_data_entry = {"id": account_id, "username": username, "password": password}
 
-    with open(USER_FILE, "w") as file:
+    with open(user_file, "w") as file:
         json.dump(user_data_entry, file, indent=4)
 
-    if not os.path.exists(CONTACTS_FILE) or os.path.getsize(CONTACTS_FILE) == 0:
-        with open(CONTACTS_FILE, "w") as file:
+    if not os.path.exists(contacts_file) or os.path.getsize(contacts_file) == 0:
+        with open(contacts_file, "w") as file:
             json.dump([], file, indent=4)
 
     print("[green]User has been added![/green]")
@@ -153,15 +155,15 @@ def add_user() -> None:
 def login(username: str) -> None:
     command_initialization_check()
 
-    USER_FILE = f"database/accounts/{username.lower()}/settings.json"
+    user_file = f"database/accounts/{username.lower()}/settings.json"
 
     try:
-        with open(USER_FILE, "r") as file:
+        with open(user_file, "r") as file:
             user_data = json.load(file)
     except:
         print("[red]User does not exists.[/red]")
         return
-    
+
     if not user_data:
         print("[red]Error in loading data.[/red]")
 
@@ -185,6 +187,52 @@ def login(username: str) -> None:
         json.dump(settings_data, file, indent=4)
 
     print(f"[green]Successfully logged in as {username}.[/green]")
+
+
+@app.command()
+def add_contact() -> None:
+    command_initialization_check()
+
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    username = settings_data.get("current_account", None)
+
+    if username == None:
+        print("[red]You haven't logged in yet.\nUse login command to login.")
+        return
+    
+    while True:
+        contact_name = input("Name: ")
+
+        if contact_name == 0:
+            print("[red]Please enter a valid name.[/red]")
+            continue
+
+        contact_number = input("Number: ")
+
+        if len(contact_number) != 10:
+            print("[red]Please enter a valid number.[/red]")
+            continue
+
+        break
+    
+    contacts_file = f"database/accounts/{username.lower()}/contacts.json"
+
+    with open(contacts_file, "r") as file:
+        contacts_data = json.load(file)
+
+    contact_data_entry = {
+        "name": contact_name,
+        "number": contact_number
+    }
+
+    contacts_data.append(contact_data_entry)
+
+    with open(contacts_file, "w") as file:
+        json.dump(contacts_data, file, indent=4)
+
+    print("[green]Contact has been added.")
 
 
 if __name__ == "__main__":
