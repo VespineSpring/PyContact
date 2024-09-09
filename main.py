@@ -26,17 +26,17 @@ def is_initialized() -> bool:
     return True
 
 
-def setup_database(username: str, password: str):
+def setup_database(username: str, password: str) -> None:
     os.makedirs(f"database/accounts/{username.lower()}", exist_ok=True)
 
-    settings_data = {
+    settings_entry = {
         "initialized": True,
         "current_account": None,
         "accounts": [username],
     }
 
     with open(SETTINGS_FILE, "w") as file:
-        json.dump(settings_data, file, indent=4)
+        json.dump(settings_entry, file, indent=4)
 
     account_id = str(uuid.uuid4())
 
@@ -44,15 +44,27 @@ def setup_database(username: str, password: str):
         with open(ACCOUNTS_FILE, "w") as file:
             json.dump([], file, indent=4)
 
-    account_data_query = {"id": account_id, "username": username, "password": password}
+    account_data_entry = {"id": account_id, "username": username, "password": password}
 
     with open(ACCOUNTS_FILE, "r") as file:
         account_data = json.load(file)
 
-    account_data.append(account_data_query)
+    account_data.append(account_data_entry)
 
     with open(ACCOUNTS_FILE, "w") as file:
         json.dump(account_data, file, indent=4)
+
+    USER_FILE = f"database/accounts/{username.lower()}/settings.json"
+    CONTACTS_FILE = f"database/accounts/{username.lower()}/contacts.json"
+
+    user_data_entry = {"id": account_id, "username": username, "password": password}
+
+    with open(USER_FILE, "w") as file:
+        json.dump(user_data_entry, file, indent=4)
+
+    if not os.path.exists(CONTACTS_FILE) or os.path.getsize(CONTACTS_FILE) == 0:
+        with open(CONTACTS_FILE, "w") as file:
+            json.dump([], file, indent=4)
 
 
 is_app_initialized = is_initialized()
@@ -98,14 +110,14 @@ def add_user() -> None:
         break
 
     with open(SETTINGS_FILE, "r") as file:
-        settings_data = json.load(file)
+        settings_entry = json.load(file)
 
-    accounts_list = settings_data.get("accounts", [])
+    accounts_list = settings_entry.get("accounts", [])
 
     accounts_list.append(username)
 
     with open(SETTINGS_FILE, "w") as file:
-        json.dump(settings_data, file, indent=4)
+        json.dump(settings_entry, file, indent=4)
 
     account_id = str(uuid.uuid4())
 
@@ -120,6 +132,18 @@ def add_user() -> None:
         json.dump(account_data, file, indent=4)
 
     os.makedirs(f"database/accounts/{username.lower()}", exist_ok=True)
+
+    USER_FILE = f"database/accounts/{username.lower()}/settings.json"
+    CONTACTS_FILE = f"database/accounts/{username.lower()}/contacts.json"
+
+    user_data_entry = {"id": account_id, "username": username, "password": password}
+
+    with open(USER_FILE, "w") as file:
+        json.dump(user_data_entry, file, indent=4)
+
+    if not os.path.exists(CONTACTS_FILE) or os.path.getsize(CONTACTS_FILE) == 0:
+        with open(CONTACTS_FILE, "w") as file:
+            json.dump([], file, indent=4)
 
     print("[green]User has been added![/green]")
 
