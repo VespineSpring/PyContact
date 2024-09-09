@@ -10,7 +10,7 @@ SETTINGS_FILE = "database/settings.json"
 ACCOUNTS_FILE = "database/accounts.json"
 
 
-def is_initialized() -> bool:
+def initialization_check() -> bool:
     try:
         with open(SETTINGS_FILE, "r") as file:
             data = json.load(file)
@@ -67,12 +67,9 @@ def setup_database(username: str, password: str) -> None:
             json.dump([], file, indent=4)
 
 
-is_app_initialized = is_initialized()
-
-
 @app.command(name="init")
 def initialize() -> None:
-    if is_app_initialized:
+    if initialization_check():
         print("[red]App has been already initialized![/red]")
         return
 
@@ -92,11 +89,15 @@ def initialize() -> None:
     print("[green]App has been initialized.[/green]")
 
 
-@app.command()
-def add_user() -> None:
-    if not is_app_initialized:
+def command_initialization_check() -> None:
+    if not initialization_check():
         print("[red]App has not been initialized yet.\nRun 'init' command to initialize it.[/red]")
         return
+
+
+@app.command()
+def add_user() -> None:
+    command_initialization_check()
 
     while True:
         username: str = input("Username: ")
@@ -110,14 +111,14 @@ def add_user() -> None:
         break
 
     with open(SETTINGS_FILE, "r") as file:
-        settings_entry = json.load(file)
+        settings_data = json.load(file)
 
-    accounts_list = settings_entry.get("accounts", [])
+    accounts_list = settings_data.get("accounts", [])
 
     accounts_list.append(username)
 
     with open(SETTINGS_FILE, "w") as file:
-        json.dump(settings_entry, file, indent=4)
+        json.dump(settings_data, file, indent=4)
 
     account_id = str(uuid.uuid4())
 
@@ -146,6 +147,44 @@ def add_user() -> None:
             json.dump([], file, indent=4)
 
     print("[green]User has been added![/green]")
+
+
+@app.command()
+def login(username: str) -> None:
+    command_initialization_check()
+
+    USER_FILE = f"database/accounts/{username.lower()}/settings.json"
+
+    try:
+        with open(USER_FILE, "r") as file:
+            user_data = json.load(file)
+    except:
+        print("[red]User does not exists.[/red]")
+        return
+    
+    if not user_data:
+        print("[red]Error in loading data.[/red]")
+
+    account_password = user_data.get("password")
+
+    while True:
+        password = input("Password: ")
+
+        if account_password != password:
+            print("[red]Wrong password.")
+            continue
+
+        break
+
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    settings_data["current_account"] = username
+
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(settings_data, file, indent=4)
+
+    print(f"[green]Successfully logged in as {username}.[/green]")
 
 
 if __name__ == "__main__":
