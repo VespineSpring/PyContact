@@ -4,10 +4,13 @@ import json
 import uuid
 
 from rich import print
+from rich.console import Console
+from rich.table import Table
 
 app = typer.Typer()
 SETTINGS_FILE = "database/settings.json"
 ACCOUNTS_FILE = "database/accounts.json"
+console = Console()
 
 
 def initialization_check() -> bool:
@@ -158,9 +161,9 @@ def login(username: str) -> None:
     with open(SETTINGS_FILE, "r") as file:
         settings_data = json.load(file)
 
-    current_account = settings_data.get("current_account", False)
+    current_account = settings_data.get("current_account", None)
 
-    if current_account != False:
+    if current_account != None:
         print(
             f"[red]You are currently logged in to {current_account}.\nUse switch or logout command.[/red]"
         )
@@ -303,6 +306,42 @@ def add_contact() -> None:
         json.dump(contacts_data, file, indent=4)
 
     print("[green]Contact has been added.")
+
+
+@app.command()
+def contacts() -> None:
+    command_initialization_check()
+
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    username = settings_data.get("current_account", None)
+
+    if username == None:
+        print("[red]You haven't logged in yet.\nUse login command to login.[/red]")
+        return
+    
+    contacts_file = f"database/accounts/{username}/contacts.json"
+
+    table = Table("Name", "Number")
+
+    with open(contacts_file, "r") as file:
+        contacts_data = json.load(file)
+
+    if contacts_data == []:
+        print("[red]No contact found.[/red]")
+        return
+
+    for query in contacts_data:
+        contact_name = query.get("name", None)
+        contact_number = query.get("number", None)
+        if contact_name is None or contact_number is None:
+            print("[yellow]Skipping incomplete contact entry.[/yellow]")
+            continue
+        table.add_row(contact_name, contact_number)
+
+    console.print(table)
+
 
 
 if __name__ == "__main__":

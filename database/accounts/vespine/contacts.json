@@ -2,5 +2,17 @@
     {
         "name": "Travus",
         "number": "5432109876"
+    },
+    {
+        "name": "Droid",
+        "number": "0987654321"
+    },
+    {
+        "name": "Crave",
+        "number": "3215746890"
+    },
+    {
+        "name": "Luke",
+        "number": "6574839201"
     }
 ]
