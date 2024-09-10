@@ -2,6 +2,7 @@ import typer
 import os
 import json
 import uuid
+import shutil
 
 from rich import print
 from rich.console import Console
@@ -35,7 +36,7 @@ def setup_database(username: str, password: str) -> None:
     settings_entry = {
         "initialized": True,
         "current_account": None,
-        "accounts": [username],
+        "accounts": [username.lower()],
     }
 
     with open(SETTINGS_FILE, "w") as file:
@@ -119,19 +120,17 @@ def add_user() -> None:
         settings_data = json.load(file)
 
     accounts_list = settings_data.get("accounts", [])
-
-    accounts_list.append(username)
+    accounts_list.append(username.lower())
 
     with open(SETTINGS_FILE, "w") as file:
         json.dump(settings_data, file, indent=4)
 
     account_id = str(uuid.uuid4())
 
-    account_data_query = {"id": account_id, "username": username, "password": password}
-
     with open(ACCOUNTS_FILE, "r") as file:
         account_data = json.load(file)
 
+    account_data_query = {"id": account_id, "username": username, "password": password}
     account_data.append(account_data_query)
 
     with open(ACCOUNTS_FILE, "w") as file:
@@ -200,7 +199,7 @@ def login(username: str) -> None:
     print(f"[green]Successfully logged in as {username}.[/green]")
 
 
-@app.command()
+@app.command(name="switch")
 def switch_account(username: str) -> None:
     command_initialization_check()
 
@@ -265,7 +264,7 @@ def logout() -> None:
     print(f"[yellow]Successfully logged out of {username}[/yellow]")
 
 
-@app.command()
+@app.command(name="add")
 def add_contact() -> None:
     command_initialization_check()
 
@@ -321,7 +320,7 @@ def contacts() -> None:
         print("[red]You haven't logged in yet.\nUse login command to login.[/red]")
         return
     
-    contacts_file = f"database/accounts/{username}/contacts.json"
+    contacts_file = f"database/accounts/{username.lower()}/contacts.json"
 
     table = Table("Name", "Number")
 
@@ -342,6 +341,70 @@ def contacts() -> None:
 
     console.print(table)
 
+
+@app.command(name="rm-user")
+def remove_user(username: str) -> None:
+    command_initialization_check()
+
+    user_file = f"database/accounts/{username.lower()}/settings.json"
+
+    try:
+        with open(user_file, "r") as file:
+            user_data = json.load(file)
+    except:
+        print("[red]User not found.[/red]")
+        return
+
+    account_id = user_data.get("id")
+    account_password = user_data.get("password")
+
+    while True:
+        password = input("Password: ")
+
+        if password != account_password:
+            print("[red]Wrong password.[/red]")
+            continue
+
+        break
+
+    while True:
+        confirmation = input("Do you want to delete the account [Y/N]: ")
+
+        if confirmation not in ["y", "n", "Y", "N"]:
+            print("[yellow]Invalid response.[/yellow]")
+            continue
+
+        break
+
+    if confirmation in ["n", "N"]:
+        print("[blue]Account deletion cancelled.[/blue]")
+        return
+    
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    accounts_list = settings_data.get("accounts")
+    accounts_list.remove(username)
+
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(settings_data, file, indent=4)
+
+    with open(ACCOUNTS_FILE, "r") as file:
+        accounts_data = json.load(file)
+
+    accounts_data_entry = [data for data in accounts_data if data["id"] != account_id]
+
+    with open(ACCOUNTS_FILE, "w") as file:
+        json.dump(accounts_data_entry, file, indent=4)
+
+    shutil.rmtree(f"database/accounts/{username.lower()}")
+
+    print("[green]User hase been removed.[/green]")
+
+
+@app.command(name="rm-contact")
+def remove_contact(number: int) -> None:
+    command_initialization_check()
 
 
 if __name__ == "__main__":

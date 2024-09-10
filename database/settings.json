@@ -1,9 +1,9 @@
 {
     "initialized": true,
-    "current_account": "elbert",
+    "current_account": null,
     "accounts": [
-        "Vespine",
-        "Robert",
-        "Elbert"
+        "vespine",
+        "robert",
+        "elbert"
     ]
 }
