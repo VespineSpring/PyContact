@@ -155,6 +155,17 @@ def add_user() -> None:
 def login(username: str) -> None:
     command_initialization_check()
 
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    current_account = settings_data.get("current_account", False)
+
+    if current_account != False:
+        print(
+            f"[red]You are currently logged in to {current_account}.\nUse switch or logout command.[/red]"
+        )
+        return
+
     user_file = f"database/accounts/{username.lower()}/settings.json"
 
     try:
@@ -178,15 +189,77 @@ def login(username: str) -> None:
 
         break
 
-    with open(SETTINGS_FILE, "r") as file:
-        settings_data = json.load(file)
-
     settings_data["current_account"] = username
 
     with open(SETTINGS_FILE, "w") as file:
         json.dump(settings_data, file, indent=4)
 
     print(f"[green]Successfully logged in as {username}.[/green]")
+
+
+@app.command()
+def switch_account(username: str) -> None:
+    command_initialization_check()
+
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    current_account = settings_data.get("current_account", None)
+
+    if current_account == None:
+        print("[red]You haven't logged in yet.\nUse login command to login.")
+        return
+
+    user_file = f"database/accounts/{username.lower()}/settings.json"
+
+    try:
+        with open(user_file, "r") as file:
+            user_data = json.load(file)
+    except:
+        print("[red]User does not exists.[/red]")
+        return
+
+    if not user_data:
+        print("[red]Error in loading data.[/red]")
+
+    account_password = user_data.get("password")
+
+    while True:
+        password = input("Password: ")
+
+        if account_password != password:
+            print("[red]Wrong password.")
+            continue
+
+        break
+
+    settings_data["current_account"] = username
+
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(settings_data, file, indent=4)
+
+    print(f"[green]Successfully switched to {username}.[/green]")
+
+
+@app.command()
+def logout() -> None:
+    command_initialization_check()
+
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    username = settings_data.get("current_account", None)
+
+    if username == None:
+        print("[red]You haven't logged in yet.[/red]")
+        return
+
+    settings_data["current_account"] = None
+
+    with open(SETTINGS_FILE, "w") as file:
+        json.dump(settings_data, file, indent=4)
+
+    print(f"[yellow]Successfully logged out of {username}[/yellow]")
 
 
 @app.command()
@@ -199,9 +272,9 @@ def add_contact() -> None:
     username = settings_data.get("current_account", None)
 
     if username == None:
-        print("[red]You haven't logged in yet.\nUse login command to login.")
+        print("[red]You haven't logged in yet.\nUse login command to login.[/red]")
         return
-    
+
     while True:
         contact_name = input("Name: ")
 
@@ -216,16 +289,13 @@ def add_contact() -> None:
             continue
 
         break
-    
+
     contacts_file = f"database/accounts/{username.lower()}/contacts.json"
 
     with open(contacts_file, "r") as file:
         contacts_data = json.load(file)
 
-    contact_data_entry = {
-        "name": contact_name,
-        "number": contact_number
-    }
+    contact_data_entry = {"name": contact_name, "number": contact_number}
 
     contacts_data.append(contact_data_entry)
 
