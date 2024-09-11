@@ -408,7 +408,6 @@ def remove_user(username: str) -> None:
 @app.command(name="rm-contact")
 def remove_contact() -> None:
     command_initialization_check()
-
     
     with open(SETTINGS_FILE, "r") as file:
         settings_data = json.load(file)
@@ -428,6 +427,18 @@ def remove_contact() -> None:
 
         break
 
+    contacts_file = f"database/accounts/{username.lower()}/contacts.json"
+
+    with open(contacts_file, "r") as file:
+        contacts_data = json.load(file)
+
+    for data in contacts_data:
+        if data.get("number") == contact_number:
+            break
+    else:
+        print("[red]Contact not found.[/red]")
+        return
+
     while True:
         confirmation = input("Do you want to delete the contact? [Y/N]: ")
 
@@ -440,11 +451,6 @@ def remove_contact() -> None:
     if confirmation in ["n", "N"]:
         print("[blue]Contact deletion cancelled.[/blue]")
         return
-
-    contacts_file = f"database/accounts/{username.lower()}/contacts.json"
-
-    with open(contacts_file, "r") as file:
-        contacts_data = json.load(file)
 
     contacts_data_entry = [data for data in contacts_data if data["number"] != contact_number]
 
