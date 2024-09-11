@@ -283,9 +283,12 @@ def add_contact() -> None:
         if contact_name == 0:
             print("[red]Please enter a valid name.[/red]")
             continue
+        
+        break
 
+    while True:
         contact_number = input("Number: ")
-
+        
         if len(contact_number) != 10:
             print("[red]Please enter a valid number.[/red]")
             continue
@@ -304,7 +307,7 @@ def add_contact() -> None:
     with open(contacts_file, "w") as file:
         json.dump(contacts_data, file, indent=4)
 
-    print("[green]Contact has been added.")
+    print("[green]Contact has been added.[/green]")
 
 
 @app.command()
@@ -368,7 +371,7 @@ def remove_user(username: str) -> None:
         break
 
     while True:
-        confirmation = input("Do you want to delete the account [Y/N]: ")
+        confirmation = input("Do you want to delete the account? [Y/N]: ")
 
         if confirmation not in ["y", "n", "Y", "N"]:
             print("[yellow]Invalid response.[/yellow]")
@@ -403,8 +406,52 @@ def remove_user(username: str) -> None:
 
 
 @app.command(name="rm-contact")
-def remove_contact(number: int) -> None:
+def remove_contact() -> None:
     command_initialization_check()
+
+    
+    with open(SETTINGS_FILE, "r") as file:
+        settings_data = json.load(file)
+
+    username = settings_data.get("current_account", None)
+
+    if username == None:
+        print("[red]You haven't logged in yet.\nUse login command to login.[/red]")
+        return
+
+    while True:
+        contact_number = input("Number: ")
+
+        if len(contact_number) != 10:
+            print("[red]Please enter a valid number.[/red]")
+            continue
+
+        break
+
+    while True:
+        confirmation = input("Do you want to delete the contact? [Y/N]: ")
+
+        if confirmation not in ["y", "n", "Y", "N"]:
+            print("[yellow]Invalid response.[/yellow]")
+            continue
+
+        break
+
+    if confirmation in ["n", "N"]:
+        print("[blue]Contact deletion cancelled.[/blue]")
+        return
+
+    contacts_file = f"database/accounts/{username.lower()}/contacts.json"
+
+    with open(contacts_file, "r") as file:
+        contacts_data = json.load(file)
+
+    contacts_data_entry = [data for data in contacts_data if data["number"] != contact_number]
+
+    with open(contacts_file, "w") as file:
+        json.dump(contacts_data_entry, file, indent=4)
+
+    print("[green]Contact has been deleted.[/green]")
 
 
 if __name__ == "__main__":
